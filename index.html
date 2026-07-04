@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gerador de Oblongo — Simulador de Trajetória</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#14171a;
+  --panel:#1b1f24;
+  --panel2:#20252b;
+  --border:#2b3038;
+  --border-light:#3a4048;
+  --amber:#ffb020;
+  --amber-dim:#8a6420;
+  --cyan:#2fd3d9;
+  --cyan-dim:#1a6d70;
+  --text:#e7e9ec;
+  --text-dim:#8b929c;
+  --danger:#e0524a;
+  --ok:#4caf6a;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #1c2128 0%, transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Mono', Consolas, Menlo, monospace;
+  min-height:100vh;
+}
+
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:28px 20px 60px;
+}
+
+.masthead{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-bottom:2px solid var(--border-light);
+  padding-bottom:14px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.masthead h1{
+  font-family:'Oswald', sans-serif;
+  font-weight:700;
+  font-size:26px;
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+  margin:0;
+  color:var(--text);
+}
+.masthead h1 span{color:var(--amber);}
+.masthead .sub{
+  font-size:12px;
+  color:var(--text-dim);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:18px;
+}
+@media (max-width:860px){
+  .grid{grid-template-columns:1fr;}
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:4px;
+}
+
+.panel-head{
+  font-family:'Oswald', sans-serif;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--amber);
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel2);
+  border-radius:4px 4px 0 0;
+}
+
+.field-list{padding:14px;}
+.field{margin-bottom:14px;}
+.field label{
+  display:block;
+  font-size:11px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  margin-bottom:5px;
+}
+.field .row{display:flex; align-items:center; gap:6px;}
+.field input[type=number]{
+  width:100%;
+  background:#0f1215;
+  border:1px solid var(--border-light);
+  color:var(--amber);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:15px;
+  font-weight:600;
+  padding:7px 8px;
+  border-radius:3px;
+  outline:none;
+}
+.field input[type=number]:focus{border-color:var(--amber);}
+.field .unit{font-size:11px; color:var(--text-dim); min-width:22px;}
+
+.err-box{
+  margin:0 14px 14px;
+  padding:10px 12px;
+  border:1px solid var(--danger);
+  background:rgba(224,82,74,0.08);
+  color:#f3a29d;
+  font-size:12px;
+  border-radius:3px;
+  line-height:1.5;
+  display:none;
+}
+.err-box.show{display:block;}
+
+.derived{padding:12px 14px; border-top:1px solid var(--border); font-size:12px;}
+.derived .d-row{display:flex; justify-content:space-between; padding:4px 0; color:var(--text-dim);}
+.derived .d-row b{color:var(--cyan); font-weight:600;}
+
+.stage-wrap{display:flex; flex-direction:column; gap:12px;}
+
+.stage{
+  position:relative;
+  aspect-ratio:16/10;
+  background:
+    linear-gradient(var(--border) 1px, transparent 1px) 0 0/24px 24px,
+    linear-gradient(90deg, var(--border) 1px, transparent 1px) 0 0/24px 24px,
+    #0e1114;
+  border-radius:4px 4px 0 0;
+}
+.stage svg{width:100%; height:100%; display:block;}
+
+.dro{
+  display:flex;
+  gap:0;
+  border-left:1px solid var(--border);
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  background:#0e1114;
+}
+.dro-cell{
+  flex:1;
+  padding:10px 14px;
+  border-right:1px solid var(--border);
+  text-align:center;
+}
+.dro-cell:last-child{border-right:none;}
+.dro-cell .k{font-size:10px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase;}
+.dro-cell .v{font-size:22px; font-weight:600; color:var(--amber); font-variant-numeric:tabular-nums;}
+.dro-cell .v.line{color:var(--cyan);}
+
+.controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-top:none;
+  background:var(--panel);
+  flex-wrap:wrap;
+}
+button.ctrl{
+  background:var(--panel2);
+  border:1px solid var(--border-light);
+  color:var(--text);
+  font-family:'Oswald', sans-serif;
+  font-weight:600;
+  font-size:12px;
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+  padding:9px 16px;
+  border-radius:3px;
+  cursor:pointer;
+}
+button.ctrl:hover{border-color:var(--amber); color:var(--amber);}
+button.ctrl.primary{background:var(--amber); border-color:var(--amber); color:#1a1400;}
+button.ctrl.primary:hover{color:#1a1400; background:#ffc350;}
+.speed-wrap{display:flex; align-items:center; gap:8px; margin-left:auto; font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;}
+.speed-wrap input[type=range]{accent-color:var(--amber);}
+
+.gcode-out{
+  margin-top:14px;
+  background:#0e1114;
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:14px;
+  font-size:20px;
+  line-height:1.;
+  color:var(--cyan);
+  white-space:pre;
+  overflow-x:auto;
+}
+.gcode-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+.gcode-head span{font-family:'Oswald', sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim);}
+.copy-btn{
+  background:none; border:1px solid var(--border-light); color:var(--text-dim);
+  font-size:10px; text-transform:uppercase; letter-spacing:0.5px; padding:5px 10px; border-radius:3px; cursor:pointer;
+  font-family:'Oswald', sans-serif;
+}
+.copy-btn:hover{color:var(--amber); border-color:var(--amber);}
+
+.legend{display:flex; gap:18px; padding:10px 14px; font-size:11px; color:var(--text-dim); flex-wrap:wrap;}
+.legend .li{display:flex; align-items:center; gap:6px;}
+.legend .sw{width:14px; height:3px; border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <h1>CNC<span>_</span>Helper</h1>
+  </div>
+
+  <div class="grid">
+
+    <!-- PAINEL DE VARIÁVEIS -->
+    <div class="panel">
+      <div class="panel-head">Variáveis</div>
+      <div class="field-list">
+        <div class="field">
+          <label>Diâmetro da ferramenta</label>
+          <div class="row"><input type="number" id="diam" value="10" step="1." min="1."><span class="unit">mm</span></div>
+        </div>
+        <div class="field">
+          <label>Comprimento do oblongo</label>
+          <div class="row"><input type="number" id="comp" value="100" step="1." min="1."><span class="unit">mm</span></div>
+        </div>
+        <div class="field">
+          <label>Largura do oblongo</label>
+          <div class="row"><input type="number" id="larg" value="15" step="0.1" min="1"><span class="unit">mm</span></div>
+        </div>
+        <div class="field">
+          <label>Centro do oblongo em X</label>
+          <div class="row"><input type="number" id="cx" value="0" step="0.5"><span class="unit">mm</span></div>
+        </div>
+        <div class="field">
+          <label>Centro do oblongo em Y</label>
+          <div class="row"><input type="number" id="cy" value="0" step="0.5"><span class="unit">mm</span></div>
+        </div>
+      </div>
+
+      <div class="err-box" id="errBox"></div>
+
+      <div class="derived">
+        <div class="d-row"><span>Raio da ferramenta</span><b id="dRTool">—</b></div>
+        <div class="d-row"><span>Raio do arco (J)</span><b id="dRArc">—</b></div>
+        <div class="d-row"><span>Meio-vão reto (X)</span><b id="dOffX">—</b></div>
+        <div class="d-row"><span>Comprimento real</span><b id="dLenCheck">—</b></div>
+        <div class="d-row"><span>Largura real</span><b id="dWidCheck">—</b></div>
+      </div>
+    </div>
+
+    <!-- ESTÁGIO VISUAL -->
+    <div class="stage-wrap">
+      <div class="panel">
+        <div class="panel-head">Simulação</div>
+        <div class="stage">
+          <svg id="svgStage" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="legend">
+          <div class="li"><span class="sw" style="background:var(--text-dim)"></span>Parede real do oblongo</div>
+          <div class="li"><span class="sw" style="background:var(--cyan)"></span>Trajetória do centro da ferramenta</div>
+          <div class="li"><span class="sw" style="background:var(--amber)"></span>Ferramenta</div>
+        </div>
+      </div>
+
+      <div class="dro">
+        <div class="dro-cell"><div class="k">X</div><div class="v" id="droX">0.000</div></div>
+        <div class="dro-cell"><div class="k">Y</div><div class="v" id="droY">0.000</div></div>
+        <div class="dro-cell"><div class="k">Bloco</div><div class="v line" id="droBlock">—</div></div>
+        <div class="dro-cell"><div class="k">Avanço</div><div class="v line" id="droPct">0%</div></div>
+      </div>
+
+      <div class="controls">
+        <button class="ctrl primary" id="btnPlay">▶ Rodar</button>
+        <button class="ctrl" id="btnStep">Passo ▸</button>
+        <button class="ctrl" id="btnReset">⟲ Reiniciar</button>
+        <div class="speed-wrap">
+          Velocidade
+          <input type="range" id="speed" min="1" max="4" value="4">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- G-CODE -->
+  <div class="gcode-out">
+    <div class="gcode-head">
+      <span>Bloco NC gerado</span>
+      <button class="copy-btn" id="btnCopy">Copiar</button>
+    </div>
+    <div id="gcodeText"></div>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const inDiam = $('diam'), inComp = $('comp'), inLarg = $('larg'), inCx = $('cx'), inCy = $('cy');
+const errBox = $('errBox');
+const svg = $('svgStage');
+
+let model = null;      // computed geometry
+let segments = [];     // animation segments
+let totalLen = 0;
+let animT = 0;          // 0..totalLen
+let playing = false;
+let lastFrame = null;
+
+function fmt(n){ return (Math.round(n*1000)/1000).toFixed(3); }
+function fmtShort(n){
+  let r = Math.round(n*1000)/1000;
+  if (Object.is(r,-0)) r = 0;
+  return r.toString().replace('.', ',');
+}
+function fmtGcode(n){
+  let r = Math.round(n*1000)/1000;
+  if (Object.is(r,-0)) r = 0;
+  return Number.isInteger(r) ? r.toString()+'.' : r.toString();
+}
+
+function computeModel(){
+  const diam = parseFloat(inDiam.value);
+  const comp = parseFloat(inComp.value);
+  const larg = parseFloat(inLarg.value);
+  const cx = parseFloat(inCx.value) || 0;
+  const cy = parseFloat(inCy.value) || 0;
+
+  let err = null;
+  if (!(diam>0) || !(comp>0) || !(larg>0)) err = 'Preencha diâmetro, comprimento e largura com valores positivos.';
+  else if (diam >= larg) err = `A ferramenta (Ø${fmtShort(diam)}) não cabe na largura do oblongo (${fmtShort(larg)}). Use Ø menor que a largura.`;
+  else if (larg > comp) err = 'A largura não pode ser maior que o comprimento — isso não é mais um oblongo.';
+
+  if (err){
+    errBox.textContent = err;
+    errBox.classList.add('show');
+    return null;
+  }
+  errBox.classList.remove('show');
+
+  const rTool = diam/2;
+  const rArc  = larg/2 - rTool;      // raio da trajetória nas pontas (J)
+  const offX  = comp/2 - larg/2;     // deslocamento do trecho reto
+  const CenterX = cx;
+  const CenterY = cy;
+  return {diam, comp, larg, cx, cy, rTool, rArc, offX};
+}
+
+function updateDerived(m){
+  if (!m){
+    $('dRTool').textContent='—'; $('dRArc').textContent='—';
+    $('dOffX').textContent='—'; $('dLenCheck').textContent='—';
+    $('dWidCheck').textContent='—';
+    return;
+  }
+  $('dRTool').textContent = fmtShort(m.rTool)+' mm';
+  $('dRArc').textContent  = fmtShort(m.rArc)+' mm';
+  $('dOffX').textContent  = fmtShort(m.offX)+' mm';
+  const realLen = 2*m.offX + m.larg; // parede real = 2*offX + largura (as duas pontas somam 1x a largura)
+  $('dLenCheck').textContent = fmtShort(realLen)+' mm';
+  $('dWidCheck').textContent = fmtShort(m.larg)+' mm';
+}
+
+// --- geometria da trajetória (coords locais, centro do oblongo em 0,0) ---
+function buildPath(m){
+  const {rArc, offX} = m;
+  const P1 = {x:0,      y:-rArc};
+  const P2 = {x:-offX,  y:-rArc};
+  const P3 = {x:-offX,  y: rArc};
+  const P4 = {x: offX,  y: rArc};
+  const P5 = {x: offX,  y:-rArc};
+
+  const segs = [
+   
+    {type:'line', from:P1, to:P2, len:offX, label:{g:'G1',a1:'X',v1:P2.x,a2:'',v2:''}},
+    {type:'arc',  center:{x:-offX,y:0}, r:rArc, aStart:-90, aEnd:-270, from:P2, to:P3, len:Math.PI*rArc, label:{g:'G2',a1:'J',v1:rArc,a2:'Y',v2:P3.y}},
+    {type:'line', from:P3, to:P4, len:2*offX, label:{g:'G1',a1:'X',v1:P4.x,a2:'',v2:''}},
+    {type:'arc',  center:{x:offX,y:0}, r:rArc, aStart:90, aEnd:-90, from:P4, to:P5, len:Math.PI*rArc, label:{g:'G2',a1:'J',v1:-rArc,a2:'Y',v2:P5.y}},
+    {type:'line', from:P5, to:P1, len:offX, label:{g:'G1',a1:'X',v1:P1.x,a2:'',v2:''}},
+  ];
+  return {segs, start:P1};
+}
+
+function sampleSeg(seg, t){ // t in [0,1]
+  if (seg.type==='line'){
+    return {x: seg.from.x + (seg.to.x-seg.from.x)*t, y: seg.from.y + (seg.to.y-seg.from.y)*t};
+  } else {
+    const a = (seg.aStart + (seg.aEnd-seg.aStart)*t) * Math.PI/180;
+    return {x: seg.center.x + seg.r*Math.cos(a), y: seg.center.y + seg.r*Math.sin(a)};
+  }
+}
+
+function arcPolyline(seg, n=28){
+  const pts = [];
+  for (let i=0;i<=n;i++) pts.push(sampleSeg(seg, i/n));
+  return pts;
+}
+
+// --- render SVG ---
+function render(){
+  const m = computeModel();
+  model = m;
+  updateDerived(m);
+  svg.innerHTML = '';
+  if (!m){ renderGcode(null); resetAnim(); return; }
+
+  const path = buildPath(m);
+  segments = path.segs;
+  totalLen = segments.reduce((s,x)=>s+x.len,0);
+
+  const pad = m.diam + 6;
+  const W = m.comp + pad*2;
+  const H = Math.max(m.larg + pad*2, W*0.45);
+  svg.setAttribute('viewBox', `${-W/2} ${-H/2} ${W} ${H}`);
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns,'g');
+  g.setAttribute('transform','scale(1,-1)'); // y-up -> render
+  svg.appendChild(g);
+
+  // parede real do oblongo (contorno físico) — mesmos centros/ângulos da trajetória, raio = largura/2
+  const rWall = m.larg/2;
+  const wallArcL = {center:{x:-m.offX,y:0}, r:rWall, aStart: 90, aEnd:270};
+  const wallArcR = {center:{x: m.offX,y:0}, r:rWall, aStart: -90, aEnd: 90};
+  const wallPtsL = arcPolyline(wallArcL);
+  const wallPtsR = arcPolyline(wallArcR);
+  let wallD = `M ${-m.offX} ${-rWall} L ${m.offX} ${-rWall} `;
+  wallPtsR.forEach(p=> wallD += `L ${p.x} ${p.y} `);
+  wallD += `L ${-m.offX} ${rWall} `;
+  wallPtsL.forEach(p=> wallD += `L ${p.x} ${p.y} `);
+  wallD += 'Z';
+  const wall = document.createElementNS(ns,'path');
+  wall.setAttribute('d', wallD);
+  wall.setAttribute('fill','none');
+  wall.setAttribute('stroke','var(--text-dim)');
+  wall.setAttribute('stroke-width', Math.max(W,H)*0.004);
+  g.appendChild(wall);
+
+  // trajetória (centro da ferramenta)
+  let d = '';
+  segments.forEach((seg,i)=>{
+    const pts = seg.type==='line' ? [seg.from, seg.to] : arcPolyline(seg);
+    pts.forEach((p,j)=>{
+      if (i===0 && j===0) d += `M ${p.x} ${p.y} `;
+      else d += `L ${p.x} ${p.y} `;
+    });
+  });
+  const tool = document.createElementNS(ns,'path');
+  tool.setAttribute('d', d);
+  tool.setAttribute('fill','none');
+  tool.setAttribute('stroke','var(--cyan)');
+  tool.setAttribute('stroke-width', Math.max(W,H)*0.003);
+  tool.setAttribute('stroke-dasharray', `${Math.max(W,H)*0.012} ${Math.max(W,H)*0.008}`);
+  g.appendChild(tool);
+
+  // ponto de entrada
+  const entry = document.createElementNS(ns,'circle');
+  entry.setAttribute('cx', path.start.x); entry.setAttribute('cy', path.start.y);
+  entry.setAttribute('r', Math.max(W,H)*0.006);
+  entry.setAttribute('fill','var(--cyan)');
+  g.appendChild(entry);
+
+  // ferramenta (círculo animado)
+  const toolCircle = document.createElementNS(ns,'circle');
+  toolCircle.setAttribute('id','toolCircle');
+  toolCircle.setAttribute('r', m.rTool);
+  toolCircle.setAttribute('fill','rgba(255,176,32,0.16)');
+  toolCircle.setAttribute('stroke','var(--amber)');
+  toolCircle.setAttribute('stroke-width', Math.max(W,H)*0.0025);
+  g.appendChild(toolCircle);
+
+  const crosshair = document.createElementNS(ns,'g');
+  crosshair.setAttribute('id','crosshair');
+  crosshair.setAttribute('stroke','var(--amber)');
+  crosshair.setAttribute('stroke-width', Math.max(W,H)*0.002);
+  const chSize = Math.max(W,H)*0.02;
+  const l1 = document.createElementNS(ns,'line'); l1.setAttribute('x1',-chSize); l1.setAttribute('x2',chSize); l1.setAttribute('y1',0); l1.setAttribute('y2',0);
+  const l2 = document.createElementNS(ns,'line'); l2.setAttribute('y1',-chSize); l2.setAttribute('y2',chSize); l2.setAttribute('x1',0); l2.setAttribute('x2',0);
+  crosshair.appendChild(l1); crosshair.appendChild(l2);
+  g.appendChild(crosshair);
+
+  renderGcode(m, path);
+  resetAnim();
+}
+
+function renderGcode(m, path){
+  const out = $('gcodeText');
+  if (!m){ out.textContent=''; return; }
+  const lines = [];
+  const P1 = path.start;
+  lines.push(`G1 X${fmtGcode(m.cx+P1.x)} Y${fmtGcode(m.cy+P1.y)}`);
+  segments.forEach(seg=>{
+    const lb = seg.label;
+    let line = lb.a1==='J' ? `${lb.g} J${fmtGcode(lb.v1)}` : `${lb.g} X${fmtGcode(m.cx+lb.v1)}`;
+    if (lb.a2) line += ` ${lb.a2}${fmtGcode(m.cy+lb.v2)}`;
+    lines.push(line);
+  });
+  out.textContent = lines.join('\n');
+}
+
+// --- animação ---
+function resetAnim(){
+  animT = 0;
+  playing = false;
+  $('btnPlay').textContent = '▶ Rodar';
+  updateToolPosition();
+}
+
+function segAt(t){
+  let acc = 0;
+  for (let i=0;i<segments.length;i++){
+    if (t <= acc+segments[i].len || i===segments.length-1){
+      const local = segments[i].len>0 ? (t-acc)/segments[i].len : 0;
+      return {seg:segments[i], idx:i, local:Math.min(Math.max(local,0),1)};
+    }
+    acc += segments[i].len;
+  }
+  return {seg:segments[segments.length-1], idx:segments.length-1, local:1};
+}
+
+function updateToolPosition(){
+  if (!model){ return; }
+  const {seg, idx, local} = segAt(animT);
+  const p = sampleSeg(seg, local);
+  const tc = $('toolCircle'), ch = $('crosshair');
+  if (tc){ tc.setAttribute('cx',p.x); tc.setAttribute('cy',p.y); }
+  if (ch){ ch.setAttribute('transform', `translate(${p.x},${p.y})`); }
+  $('droX').textContent = fmt(model.cx + p.x);
+  $('droY').textContent = fmt(model.cy + p.y);
+  $('droBlock').textContent = seg.label.g + ' #' + (idx+1);
+  $('droPct').textContent = Math.round((animT/totalLen)*100) + '%';
+}
+
+function tick(ts){
+  if (!playing) return;
+  if (lastFrame==null) lastFrame = ts;
+  const dt = (ts-lastFrame)/1000;
+  lastFrame = ts;
+  const speed = parseFloat($('speed').value);
+  const rate = totalLen * (0.12 + speed*0.05); // mm/s aprox, escalado
+  animT += rate*dt;
+  if (animT >= totalLen){
+    animT = totalLen;
+    updateToolPosition();
+    playing = false;
+    $('btnPlay').textContent = '▶ Rodar';
+    return;
+  }
+  updateToolPosition();
+  requestAnimationFrame(tick);
+}
+
+$('btnPlay').addEventListener('click', ()=>{
+  if (!model) return;
+  if (animT >= totalLen) animT = 0;
+  playing = !playing;
+  $('btnPlay').textContent = playing ? '⏸ Pausar' : '▶ Rodar';
+  if (playing){ lastFrame=null; requestAnimationFrame(tick); }
+});
+$('btnStep').addEventListener('click', ()=>{
+  if (!model) return;
+  playing = false; $('btnPlay').textContent='▶ Rodar';
+  const step = totalLen/4;
+  animT = Math.min(animT+step, totalLen);
+  updateToolPosition();
+});
+$('btnReset').addEventListener('click', resetAnim);
+$('btnCopy').addEventListener('click', ()=>{
+  const text = $('gcodeText').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const b = $('btnCopy');
+    const old = b.textContent;
+    b.textContent = 'Copiado!';
+    setTimeout(()=>b.textContent=old, 1200);
+  });
+});
+
+[inDiam, inComp, inLarg, inCx, inCy].forEach(el=>{
+  el.addEventListener('input', render);
+});
+
+render();
+</script>
+</body>
+</html>
