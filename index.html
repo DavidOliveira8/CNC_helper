@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Gerador de Oblongo — Simulador de Trajetória</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -111,9 +112,9 @@ body{
   border:1px solid var(--border-light);
   color:var(--amber);
   font-family:'IBM Plex Mono', monospace;
-  font-size:15px;
+  font-size:16px;
   font-weight:600;
-  padding:7px 8px;
+  padding:8px 8px;
   border-radius:3px;
   outline:none;
 }
@@ -222,13 +223,33 @@ button.ctrl.primary:hover{color:#1a1400; background:#ffc350;}
 .legend{display:flex; gap:18px; padding:10px 14px; font-size:11px; color:var(--text-dim); flex-wrap:wrap;}
 .legend .li{display:flex; align-items:center; gap:6px;}
 .legend .sw{width:14px; height:3px; border-radius:2px;}
+
+@media (max-width:600px){
+  .wrap{padding:16px 12px 40px;}
+  .masthead h1{font-size:20px;}
+  .masthead .sub{font-size:10px;}
+  .grid{gap:14px;}
+  .stage{aspect-ratio:1/1;}
+  .dro{flex-wrap:wrap;}
+  .dro-cell{flex:1 1 50%; border-bottom:1px solid var(--border); padding:8px 10px;}
+  .dro-cell:nth-child(2){border-right:none;}
+  .dro-cell:nth-child(3),
+  .dro-cell:nth-child(4){border-bottom:none;}
+  .dro-cell .v{font-size:18px;}
+  .controls{gap:8px; padding:10px;}
+  button.ctrl{flex:1 1 auto; padding:10px 12px; font-size:11px;}
+  .speed-wrap{flex:1 1 100%; margin-left:0; justify-content:space-between;}
+  .speed-wrap input[type=range]{flex:1; max-width:140px;}
+  .gcode-out{font-size:12px; padding:10px; line-height:1.7;}
+  .legend{gap:10px 16px; font-size:10px; padding:8px 10px;}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div class="masthead">
-    <h1>CNC<span>_</span>Helper</h1>
+    <h1>Mini<span>_</span>CNC</h1>
   </div>
 
   <div class="grid">
@@ -297,7 +318,7 @@ button.ctrl.primary:hover{color:#1a1400; background:#ffc350;}
         <button class="ctrl" id="btnReset">⟲ Reiniciar</button>
         <div class="speed-wrap">
           Velocidade
-          <input type="range" id="speed" min="1" max="4" value="4">
+          <input type="range" id="speed" min="1" max="10" value="4">
         </div>
       </div>
     </div>
@@ -580,7 +601,7 @@ $('btnPlay').addEventListener('click', ()=>{
 $('btnStep').addEventListener('click', ()=>{
   if (!model) return;
   playing = false; $('btnPlay').textContent='▶ Rodar';
-  const step = totalLen/4;
+  const step = totalLen/40;
   animT = Math.min(animT+step, totalLen);
   updateToolPosition();
 });
