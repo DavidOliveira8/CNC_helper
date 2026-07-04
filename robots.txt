@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://davidoliveira8.github.io/CNC_helper/sitemap.xml
