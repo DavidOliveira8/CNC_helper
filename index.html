@@ -265,7 +265,8 @@ button.ctrl.primary:hover{color:#1a1400; background:#ffc350;}
 <div class="wrap">
 
   <div class="masthead">
-    <h1>CNC<span>_</span>Helper</h1>
+    <h1>Mini<span>_</span>CNC</h1>
+    <span class="sub">Simulador de oblongo &amp; gerador de código NC</span>
   </div>
 
   <div class="grid">
@@ -287,15 +288,19 @@ button.ctrl.primary:hover{color:#1a1400; background:#ffc350;}
           <div class="row"><input type="number" id="larg" value="15" step="0.1" min="1"><span class="unit">mm</span></div>
         </div>
         <div class="field">
-          <label>Centro do oblongo em X</label>
-          <div class="row"><input type="number" id="cx" value="0" step="0.5" min="-99999"><span class="unit">mm</span></div>
+       <label>Centro do oblongo em X</label>
+          <div class="row"><button type="button" class="sign-btn" id="signCx">±</button><input type="number" id="cx" value="0" step="0.5"><span class="unit">mm</span></div>
         </div>
         <div class="field">
           <label>Centro do oblongo em Y</label>
-          <div class="row"><input type="number" id="cy" value="0" step="0.5" min="-99999"><span class="unit">mm</span></div>
+          <div class="row"><button type="button" class="sign-btn" id="signCy">±</button><input type="number" id="cy" value="0" step="0.5"><span class="unit">mm</span></div>
         </div>
       </div>
 
+
+      
+
+      
       <div class="err-box" id="errBox"></div>
 
       <div class="derived">
@@ -334,7 +339,7 @@ button.ctrl.primary:hover{color:#1a1400; background:#ffc350;}
         <button class="ctrl" id="btnReset">⟲ Reiniciar</button>
         <div class="speed-wrap">
           Velocidade
-          <input type="range" id="speed" min="1" max="5" value="1">
+          <input type="range" id="speed" min="1" max="10" value="4">
         </div>
       </div>
     </div>
@@ -617,7 +622,7 @@ $('btnPlay').addEventListener('click', ()=>{
 $('btnStep').addEventListener('click', ()=>{
   if (!model) return;
   playing = false; $('btnPlay').textContent='▶ Rodar';
-  const step = totalLen/4;
+  const step = totalLen/40;
   animT = Math.min(animT+step, totalLen);
   updateToolPosition();
 });
@@ -635,6 +640,18 @@ $('btnCopy').addEventListener('click', ()=>{
 [inDiam, inComp, inLarg, inCx, inCy].forEach(el=>{
   el.addEventListener('input', render);
 });
+
+function toggleSign(input){
+  const v = parseFloat(input.value) || 0;
+  let neg = Math.round(-v*1000)/1000; // multiplica por -1 e arredonda pra evitar erro de ponto flutuante
+  if (Object.is(neg,-0)) neg = 0;      // evita mostrar "-0"
+  input.value = neg;
+  render(); // sua função que recalcula tudo
+}
+
+$('signCx').addEventListener('click', () => toggleSign(inCx));
+$('signCy').addEventListener('click', () => toggleSign(inCy));
+
 
 render();
 </script>
